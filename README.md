@@ -1,208 +1,183 @@
-# Xio-MD
+# WhatsApp Group Guard Bot
 
-Bot WhatsApp untuk jaga grup, dibangun pakai [Baileys](https://github.com/WhiskeySockets/Baileys) resmi (WhiskeySockets). Support Termux & Pterodactyl, login pakai Pairing Code (diutamakan) atau QR Code.
+Bot WhatsApp untuk jaga group, dibangun memakai [Baileys](https://github.com/WhiskeySockets/Baileys) resmi (`@whiskeysockets/baileys`). Support jalan di **Termux** atau **Pterodactyl Panel**.
 
----
-
-## ⚠️ Baca Dulu Sebelum Mulai
-
-1. **Nomor bot sebaiknya BUKAN nomor utama kamu.** Pakai nomor WA kedua khusus buat bot. Kalau nomor bot ke-banned WhatsApp (karena spam/report), nomor utama kamu aman.
-2. **Jangan pernah share isi file `.env`** ke siapapun atau upload ke repo publik. File ini berisi kunci akses ke database Supabase kamu.
-3. Bot ini pakai Baileys versi `7.0.0-rc14` — ini masih **release candidate**, bukan versi stabil final. Sudah dipakai ratusan project lain, tapi tetap ada kemungkinan bug dari sisi library itu sendiri di luar kendali kode bot ini.
+> **Kenapa harus Baileys resmi?**
+> Banyak fork Baileys di internet yang disusupi backdoor (mencuri session, auto-forward pesan ke server lain, dsb). Project ini sengaja cuma memakai package resmi dari npm registry: `@whiskeysockets/baileys`.
 
 ---
 
-## 📋 Yang Kamu Butuhkan
+## Quick Start (Termux, dari Nol)
 
-- Node.js versi 18 ke atas
-- Akun [Supabase](https://supabase.com) (gratis) — dipakai buat fitur `.antidelete` dan `.rvo`
-- Nomor WhatsApp aktif buat jadi bot
-- Termux (kalau run di HP Android) atau panel Pterodactyl (kalau run di VPS/hosting)
-
----
-
-## 🚀 Setup — Langkah demi Langkah
-
-### Langkah 1: Siapkan Database Supabase
-
-1. Buka [supabase.com](https://supabase.com), login/daftar, lalu klik **New Project**.
-2. Tunggu sampai project selesai dibuat (biasanya 1-2 menit).
-3. Di sidebar kiri, klik **SQL Editor** → **New query**.
-4. Buka file `supabase_schema.sql` yang ada di folder project ini, **copy semua isinya**, lalu tempel ke SQL Editor tadi.
-5. Klik **Run** (atau tekan `Ctrl+Enter`). Kalau berhasil akan muncul "Success. No rows returned".
-6. Masih di Supabase, buka **Project Settings** (ikon gerigi di sidebar) → **API**.
-7. Catat 2 nilai ini, nanti dibutuhkan di Langkah 3:
-   - **Project URL** (contoh: `https://xxxxx.supabase.co`)
-   - **anon public** key (di bagian "Project API keys")
-
-### Langkah 2: Download & Install Project
-
-**Kalau di Termux (Android):**
+Step By Step Run via TERMUX **satu per satu**. 1
 
 ```bash
-pkg update && pkg upgrade -y
-pkg install nodejs git -y
+pkg update -y && pkg upgrade -y
+pkg install nodejs -y
 ```
 
-Lalu masuk ke folder project ini (kalau kamu dapat dalam bentuk zip/folder, extract dulu) dan:
+Cek hasil `node -v` 2.
+```bash 
+node -v
+```
+
+Kalau di bawah 20 Jalankan Command ini 3.
+```bash
+pkg install nodejs-lts -y
+```
+
+4 Lanjut:
 
 ```bash
-cd xio-md
+pkg install git unzip -y
+```
+Step 5
+```
+git clone https://github.com/orythor/Xio-MD.git
+cd Xio-MD
+```
+Step 6
+```bash
 npm install
 ```
-
-**Kalau di Pterodactyl:**
-
-1. Buat server baru dengan Egg **Node.js** (versi 18+).
-2. Upload seluruh isi folder project ini ke File Manager Pterodactyl (atau lewat SFTP).
-3. Buka tab **Console**, jalankan:
-   ```bash
-   npm install
-   ```
-
-### Langkah 3: Isi File `.env`
-
-1. Cari file bernama `.env.example` di folder project.
-2. Duplikat file itu, ganti namanya jadi `.env` (buang `.example`-nya).
-3. Buka `.env`, isi setiap baris:
-
-```env
-OWNER_NUMBER=628xxxxxxxxxx      # nomor WA kamu sendiri, buat akses command owner
-LOGIN_METHOD=pairing            # "pairing" atau "qr"
-BOT_NUMBER=628xxxxxxxxxx        # nomor WA yang mau dijadiin bot (isi kalau LOGIN_METHOD=pairing)
-PREFIX=.                        # awalan command, defaultnya titik
-SUPABASE_URL=https://xxxxx.supabase.co       # dari Langkah 1
-SUPABASE_ANON_KEY=isi_key_kamu_disini        # dari Langkah 1
-BOT_NAME=Xio-MD
-```
-
-> Semua nomor format-nya: kode negara + nomor, tanpa `+`, tanpa spasi, tanpa strip. Contoh nomor Indonesia: `6281234567890`.
-
-### Langkah 4: Jalankan Bot
-
+Step 7 [Jalankan]
 ```bash
 node index.js
 ```
 
-- **Kalau `LOGIN_METHOD=pairing`** (disarankan): bot bakal nampilin kode 8 digit di terminal. Buka WhatsApp di HP nomor bot → **Perangkat Tertaut** → **Tautkan Perangkat** → **Tautkan dengan nomor telepon** → masukkan kode itu.
-- **Kalau `LOGIN_METHOD=qr`**: bot nampilin QR code di terminal. Scan pakai WhatsApp di HP nomor bot lewat **Perangkat Tertaut** → **Tautkan Perangkat**.
+Metode B Via File local Step 1
+```bash
+termux-setup-storage
+cp /sdcard/Download/Xio-MD.zip ~/
+cd ~
+unzip Xio-MD.zip
+cd Xio-MD
+```
 
-Kalau berhasil, muncul tulisan `[XIO-MD] Berhasil terhubung ke WhatsApp`.
-
-Sesi login tersimpan di folder `session/` — jadi lain kali kamu jalanin `node index.js` lagi, **nggak perlu pairing/scan ulang** selama folder itu nggak dihapus.
-
-### Langkah 5 (Opsional): Jalankan di Background dengan PM2
-
-Biar bot tetap jalan walau terminal ditutup:
+Step 2 [setelah berada di dalam folder `Xio-MD`]
 
 ```bash
-npm install -g pm2
-pm2 start index.js --name xio-md
-pm2 logs xio-md      # buat lihat log
-pm2 stop xio-md      # buat berhenti
+npm install
+```
+
+Step 3 Edit `config.js`.
+
+```bash
+nano config.js
+```
+Save dengan `Ctrl+X`, lalu `Y`, lalu `Enter`.
+
+Step 4 Jalankan. 
+```bash
+node index.js
+```
+Ikuti instruksi QR code / pairing code yang muncul di layar.
+
+---
+
+## Instalasi di Pterodactyl
+
+Di tab **Startup**, pastikan **Startup Command**:
+```
+node index.js
+```
+```bash
+node ^20 (node 20 saran) 
 ```
 
 ---
 
-## 📜 Daftar Command
+## Daftar Isi
 
-`∆` = owner bot / admin grup saja. `©` = semua orang boleh pakai.
+1. [Quick Start (Termux, dari Nol)](#quick-start-termux-dari-nol)
+2. [Fitur](#fitur)
+3. [Struktur Folder](#struktur-folder)
+4. [Persiapan (Semua Platform)](#persiapan-semua-platform)
+5. [Instalasi di Termux](#instalasi-di-termux)
+6. [Instalasi di Pterodactyl](#instalasi-di-pterodactyl)
+7. [Menjalankan Bot](#menjalankan-bot)
+8. [Setting Owner Pertama Kali](#setting-owner-pertama-kali)
+9. [Daftar Command](#daftar-command)
+10. [Penjelasan Fitur Jadibot](#penjelasan-fitur-jadibot)
+11. [Troubleshooting](#troubleshooting)
+12. [Catatan Keamanan](#catatan-keamanan)
+
+---
+
+## Fitur
 
 | Command | Fungsi | Akses |
 |---|---|---|
-| `.menu` | Nampilin daftar fitur | © |
-| `.antimedia on/off` | Auto-hapus media dari member biasa | ∆ |
-| `.antilinkphishing on/off` | Auto-hapus link mencurigakan (shortlink dll) | ∆ |
-| `.antilinkgc on/off` | Auto-hapus link undangan grup WA lain | ∆ |
-| `.antilinkch on/off` | Auto-hapus link channel WA | ∆ |
-| `.antidelete on/off` | Tampilkan lagi pesan yang dihapus pengirimnya | ∆ |
-| `.antispam on/off` | Aktifkan filter antispam | ∆ |
-| `.addownerbot @user` | Jadikan seseorang owner bot (akses semua grup) | ∆ (owner only) |
-| `.addadmingb @user` | Jadikan seseorang admin bot (akses grup ini saja) | ∆ |
-| `.delete` (reply pesan) | Hapus pesan yang di-reply | ∆ |
-| `.setppgb` (reply gambar) | Ganti foto profil grup | ∆ |
-| `.setizingb admin/semua` | Atur siapa yang boleh kirim pesan di grup | ∆ |
-| `.setdeskripsi <teks>` | Ganti deskripsi grup | ∆ |
-| `.setnamagb <teks>` | Ganti nama grup | ∆ |
-| `.kick @user` | Keluarkan member dari grup | ∆ |
-| `.open` | Buka grup, semua bisa kirim pesan | ∆ |
-| `.close` | Tutup grup, cuma admin bisa kirim pesan | ∆ |
-| `.rvo` (reply pesan view-once) | Buka ulang foto/video sekali lihat | © |
+| `.jadibot [nomor]` | Jadikan sebuah nomor sebagai sub-bot (via pairing code) | Owner |
+| `.listjadibot` | Lihat daftar sub-bot yang sedang aktif
+| `.deletjadibot <nomor>` | Hapus/putuskan sub-bot tertentu
+| `.kick @tag` | Kick member dari group (bisa juga reply pesan)
+| `.delete` | Hapus pesan (reply ke pesan yang mau dihapus)
+| `.addown @tag` | Tambah owner baru
+| `.offgb` | Tutup grup (hanya admin yang bisa chat)
+| `.ongb` | Buka grup lagi (semua member bisa chat) |
+| `.setname <nama>` | Ganti nama grup (maks 25 karakter)
+| `.setdeskripsi <teks>` | Ganti deskripsi grup
+| `.setizin all/admin` | Atur siapa boleh edit info grup (nama/deskripsi/foto)|
+| `.setpp` | Ganti foto profil grup (kirim gambar dengan caption `.setpp`, atau reply gambar lalu ketik `.setpp`)
+| `.antilinkphishing on/off` | Auto-hapus pesan yang mengandung link phishing
+| `.antilinkGC on/off` | Auto-hapus link invite group/channel WhatsApp lain
+| `.antimedia on/off` | Blokir pengiriman media (gambar/video/dokumen/stiker)
+| `.antispam on/off` | Auto-hapus pesan dari member yang mengirim terlalu cepat/beruntun
+| `.menu` / `.help` | Tampilkan daftar command
 
-**Catatan soal `.setizingb`:** nama command ini agak ambigu di spesifikasi awal. Gua interpretasiin sebagai "atur izin siapa yang boleh kirim pesan di grup" (`.setizingb admin` = cuma admin yang bisa chat, `.setizingb semua` = semua member bisa chat). Kalau maksudnya beda, kasih tau — command-nya gampang disesuaikan.
 
----
-
-## ⚙️ Cara Kerja Fitur Jaga Grup
-
-- Semua command `∆` bisa dipakai oleh: **owner bot** (nomor di `OWNER_NUMBER`, atau yang ditambahkan lewat `.addownerbot`), **admin grup WhatsApp asli**, atau **admin bot khusus grup itu** (yang ditambahkan lewat `.addadmingb`).
-- Beberapa command (`.setppgb`, `.setizingb`, `.setdeskripsi`, `.setnamagb`, `.kick`, `.open`, `.close`) butuh **bot sendiri juga jadi admin** di grup itu, karena aksinya butuh izin admin dari sisi WhatsApp. Kalau bot belum admin, command bakal nolak jalan dan kasih tau.
-- Setting on/off (antimedia dkk) disimpan per-grup di Supabase, jadi nggak hilang walau bot di-restart.
-
----
-
-## 🗑️ Tentang Fitur `.antidelete`
-
-Fitur ini nyimpen histori pesan **teks** ke Supabase, dan begitu pesan dihapus pengirimnya, bot kirim ulang isinya ke grup.
-
-**Batasan yang perlu kamu tau:** versi ini **belum** bisa nampilin ulang foto/video yang dihapus — cuma teks. Ini keputusan sengaja, bukan bug: nyimpen setiap foto/video yang lewat di grup ke database bakal bikin storage Supabase kamu (terutama yang free tier) penuh dengan sangat cepat, karena grup aktif bisa kirim ratusan MB media per hari.
-
-Kalau kamu tetap mau fitur itu, ini yang perlu diubah (dan konsekuensinya):
-- Di `lib/events.js`, fungsi `handleGroupGuard`, ubah bagian `antidelete` supaya ikut nge-download & simpan `mediaBase64` untuk pesan gambar/video (bukan cuma teks).
-- Konsekuensi: tabel `messages` di Supabase bakal tumbuh jauh lebih cepat. Kamu perlu monitor kuota storage Supabase kamu, dan pertimbangkan upgrade tier kalau grup-nya aktif.
-
-Data pesan otomatis dibersihkan tiap hari untuk yang lebih tua dari 3 hari (lihat `lib/cleanup.js`), jadi tabel nggak akan tumbuh tanpa batas — tapi tetap perlu diperhatikan kalau kamu ubah supaya nyimpen media juga.
-
----
-
-## 🔁 Fitur `.rvo` (Reveal View Once)
-
-Command ini bisa buka ulang pesan foto/video "sekali lihat" (view once), dengan 2 cara:
-
-1. **Kalau pesan masih "hidup"** di dalam pesan yang di-reply (misal orang lain forward/reply pesan view-once itu dalam waktu dekat) → bot langsung bisa buka isinya.
-2. **Kalau sudah "terpakai"** (pesan asli sudah pernah dibuka/expired) → bot coba cari di cache Supabase (`viewonce_cache`), yang otomatis kesimpan tiap kali ada pesan view-once lewat di grup.
-
----
-
-## 🐛 Troubleshooting
-
-**Pairing code muncul di terminal, tapi HP nggak dapat notifikasi apa-apa.**
-Ini kadang terjadi karena `browser` config di Baileys. Kode ini sudah pakai `Browsers.ubuntu('Chrome')` yang formatnya sesuai rekomendasi terbaru — kalau masih terjadi, coba hapus folder `session/`, lalu jalankan ulang.
-
-**Koneksi putus terus / reconnect loop.**
-Cek koneksi internet server/HP kamu. Kalau masih terjadi terus, coba hapus folder `session/` dan login ulang dari awal.
-
-**Bot nggak bisa jalanin `.kick`, `.setnamagb`, dll.**
-Pastikan bot sudah dijadikan **admin** di grup itu dulu lewat menu WhatsApp biasa.
-
-**Error soal `.env` waktu start.**
-Pastikan semua baris di `.env` sudah terisi, terutama `OWNER_NUMBER`, `SUPABASE_URL`, dan `SUPABASE_ANON_KEY`.
-
-**Mau ganti gambar header `.menu`.**
-Ganti aja file `assets/menu.jpg` dengan gambar lain (nama file harus tetap sama).
-
----
-
-## 📁 Struktur Folder
+## Struktur Folder
 
 ```
-xio-md/
-├── index.js              # entry point utama
+wabot/
+├── index.js                  # Entry point, koneksi utama ke WhatsApp
+├── handler.js                 # Router pesan masuk & command
+├── config.js                  # Semua setting (owner, prefix, limit jadibot, dst)
 ├── package.json
-├── .env                  # konfigurasi kamu (JANGAN di-share)
-├── .env.example           # template konfigurasi
-├── supabase_schema.sql   # SQL buat setup database
-├── assets/
-│   └── menu.jpg           # gambar header .menu
-├── session/               # sesi login WhatsApp (auto-generate)
-├── lib/                   # semua kode inti (koneksi, permission, dll)
-└── commands/               # satu file per command
+├── database.json              # Auto-generate saat pertama kali run (JANGAN dihapus manual)
+├── commands/
+│   ├── jadibot.js
+│   ├── listjadibot.js
+│   ├── deletjadibot.js
+│   ├── kick.js
+│   ├── delete.js
+│   ├── addown.js
+│   ├── toggleGroupLock.js       # Logic .offgb dan .ongb (satu file, dua command)
+│   ├── setnama.js
+│   ├── setdeskripsi.js
+│   ├── setizin.js
+│   ├── setpp.js
+│   ├── antilinkPhishing.js     # Logic guard (jalan otomatis)
+│   ├── antilinkGC.js
+│   ├── antimedia.js
+│   ├── antispam.js
+│   ├── toggleAntilinkPhishing.js  # Command .antilinkphishing on/off
+│   ├── toggleAntilinkGC.js
+│   ├── toggleAntimedia.js
+│   ├── toggleAntispam.js
+│   └── menu.js
+├── lib/
+│   ├── database.js             # Baca/tulis database.json
+│   ├── helpers.js               # Fungsi bantu (cek admin, extract mention, dst)
+│   ├── ui.js                    # Box border & reaction emoji untuk semua balasan bot
+│   ├── jadibotManager.js        # Core logic spawn/hapus sub-bot
+│   └── groupEvents.js
+└── sessions/
+    ├── main/                    # Session bot utama (auto-generate)
+    └── sub_<nomor>/              # Session tiap sub-bot (auto-generate)
 ```
 
 ---
 
-## 🔒 Keamanan Kunci Supabase
+## Persiapan (Semua Platform)
 
-Bot ini pakai **anon key** (bukan `service_role` key) buat konek ke Supabase, dan tabel-tabelnya dikonfigurasi dengan Row Level Security (RLS) yang mengizinkan baca/tulis penuh ke 4 tabel khusus bot ini (`messages`, `viewonce_cache`, `group_settings`, `bot_roles`) — bukan ke tabel lain yang mungkin kamu buat di project Supabase yang sama.
+Yang perlu disiapkan sebelum install:
 
-Karena itu, **anon key kamu setara kunci penuh ke 4 tabel tersebut**. Jangan taruh di kode yang di-expose ke client/browser, dan jangan commit file `.env` ke Git manapun.
+1. **Nomor WhatsApp khusus untuk bot** (disarankan bukan nomor pribadi utama, karena ada risiko banned dari WhatsApp kalau dipakai). 
+2. **Node.js versi 20 ke atas**. Cek dengan:
+   ```bash
+   node -v
+   ```
+   Kalau di bawah v20, update dulu (caranya beda-beda tergantung platform, lihat bagian masing-masing di bawah).
+3. File bot ini (folder `wabot`) sudah di-extract di device/server kamu.
